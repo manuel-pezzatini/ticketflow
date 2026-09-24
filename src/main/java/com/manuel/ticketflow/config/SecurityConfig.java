@@ -43,7 +43,7 @@ public class SecurityConfig {
             )
         
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/register", "/auth/login").permitAll()
+                .requestMatchers("/auth/register", "/auth/login", "/ticketflow-ui-completo.html").permitAll()
                 .requestMatchers(HttpMethod.POST, "/tickets")
                     .hasRole("UTENTE")
 

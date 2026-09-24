@@ -26,6 +26,49 @@ L'applicazione permette a un utente di registrarsi, autenticarsi tramite JWT, cr
 
 > Il ruolo `ADMIN` è già presente nel modello, ma le funzionalità amministrative non fanno parte della v1.
 
+## User Interface
+
+TicketFlow includes a lightweight frontend integrated with the Spring Boot application to demonstrate the complete ticket management workflow.
+
+### Authentication
+
+Users can register a new account or authenticate using their credentials.
+Authentication is handled by Spring Security using JWT.
+
+![Login and Registration](docs/images/login-register.png)
+
+### User Dashboard
+
+Authenticated users can:
+
+- create new support tickets;
+- select a priority and category;
+- view their submitted tickets;
+- add and read comments related to their tickets.
+
+![User Dashboard](docs/images/user-dashboard.png)
+
+### Operator Dashboard
+
+Operators have a dedicated interface where they can:
+
+- view open tickets;
+- view tickets assigned to them;
+- take ownership of an open ticket;
+- close tickets currently in progress;
+- communicate with users through comments;
+- inspect the status history of a ticket.
+
+![Operator Dashboard](docs/images/operator-dashboard.png)
+
+## Architecture
+
+TicketFlow follows a layered Spring Boot architecture based on controllers, services, repositories and JPA entities.
+
+The project uses MySQL for persistence and Spring Security with JWT for stateless authentication and role-based authorization.
+
+![TicketFlow Architecture](docs/images/ticketflow-architecture.png)
+
 ## Stack
 
 - Java 21
