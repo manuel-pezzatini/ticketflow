@@ -1,0 +1,28 @@
+<mxfile host="Electron">
+  <diagram name="Pagina-1" id="LGOLgV9rsJf-uO43ZTbD">
+    <mxGraphModel dx="1414" dy="841" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="6ngf6NxWyqfZ8a59Uq4Y-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="UI" vertex="1">
+          <mxGeometry height="70" width="120" x="350" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="6ngf6NxWyqfZ8a59Uq4Y-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Controller" vertex="1">
+          <mxGeometry height="60" width="120" x="560" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="6ngf6NxWyqfZ8a59Uq4Y-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Services" vertex="1">
+          <mxGeometry height="60" width="120" x="440" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="6ngf6NxWyqfZ8a59Uq4Y-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Repositories" vertex="1">
+          <mxGeometry height="60" width="120" x="260" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="6ngf6NxWyqfZ8a59Uq4Y-5" parent="1" style="whiteSpace=wrap;html=1;" value="Models" vertex="1">
+          <mxGeometry height="60" width="120" x="90" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="6ngf6NxWyqfZ8a59Uq4Y-6" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="MySqlDB" vertex="1">
+          <mxGeometry height="80" width="60" x="290" y="390" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

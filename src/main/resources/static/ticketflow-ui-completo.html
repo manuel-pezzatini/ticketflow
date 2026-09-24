@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TicketFlow - Test UI</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#1f2937}
+header{background:#1f2937;color:#fff;padding:20px}header h1{margin:0}.wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:#fff;border:1px solid #dbe1e8;border-radius:10px;padding:18px;margin-bottom:18px}.full{grid-column:1/-1}
+h2{margin-top:0}h3{margin-bottom:8px}label{display:block;font-size:13px;font-weight:bold;margin:10px 0 5px}
+input,textarea,select{width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:6px}textarea{min-height:75px;resize:vertical}
+button{margin-top:12px;padding:9px 14px;border:0;border-radius:6px;background:#2563eb;color:#fff;font-weight:bold;cursor:pointer}
+.secondary{background:#475569}.danger{background:#b91c1c}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}
+.hint{font-size:12px;color:#64748b}.status{margin-top:10px;padding:10px;background:#eef2ff;border-radius:6px}
+.ticket,.comment,.history{border:1px solid #e5e7eb;border-radius:7px;padding:10px;margin-top:8px}.badge{display:inline-block;padding:3px 7px;border-radius:999px;background:#e2e8f0;font-size:11px;margin-right:5px}
+#log{background:#111827;color:#d1d5db;padding:12px;min-height:100px;max-height:240px;overflow:auto;white-space:pre-wrap;border-radius:7px;font:12px monospace}
+@media(max-width:750px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+</style>
+</head>
+<body>
+<header><h1>🎫 TicketFlow</h1><div>UI basilare per testare il backend Spring Boot</div></header>
+<div class="wrap">
+<div class="card">
+<h2>Configurazione</h2>
+<label>Backend URL</label><input id="baseUrl" value="http://localhost:8080">
+<p class="hint">Avvia Spring Boot su localhost:8080. Se apri questa pagina da un server locale, assicurati che quell'origine sia consentita dal CORS del backend.</p>
+</div>
+
+<div class="grid">
+<section class="card">
+<h2>Registrazione UTENTE</h2>
+<label>Nome</label><input id="regNome">
+<label>Cognome</label><input id="regCognome">
+<label>Email</label><input id="regEmail" type="email">
+<label>Password</label><input id="regPassword" type="password">
+<button onclick="registrazione()">Registrati</button>
+</section>
+
+<section class="card">
+<h2>Login</h2>
+<label>Email</label><input id="loginEmail" type="email">
+<label>Password</label><input id="loginPassword" type="password">
+<button onclick="login()">Accedi</button>
+<button class="secondary" onclick="logout()">Logout</button>
+<div id="sessione" class="status">Non autenticato</div>
+</section>
+
+<section class="card full">
+<h2>Area UTENTE</h2>
+<div class="grid">
+<div>
+<h3>Crea ticket</h3>
+<label>Titolo</label><input id="titolo">
+<label>Descrizione</label><textarea id="descrizione"></textarea>
+<label>Priorità</label>
+<select id="priorita"><option value="LOW">LOW</option><option value="MEDIUM" selected>MEDIUM</option><option value="HIGH">HIGH</option></select>
+<label>Categoria ID</label><input id="categoria" type="number" value="1">
+<button onclick="creaTicket()">Crea ticket</button>
+</div>
+<div>
+<h3>I miei ticket</h3>
+<button onclick="mieiTicket()">Carica / aggiorna</button>
+<div id="listaMiei" class="hint">Nessun dato caricato.</div>
+</div>
+</div>
+</section>
+
+<section class="card full">
+<h2>Area OPERATORE</h2>
+<div class="row">
+<button onclick="ticketAperti()">Ticket aperti</button>
+<button class="secondary" onclick="ticketAssegnati()">Ticket assegnati</button>
+</div>
+<div id="listaOperatore" class="hint">Nessun dato caricato.</div>
+</section>
+
+<section class="card full">
+<h2>Gestione ticket</h2>
+<label>Ticket ID</label><input id="ticketId" type="number" placeholder="Es. 1">
+<div class="row">
+<button onclick="take()">Prendi in carico</button>
+<button class="danger" onclick="closeTicket()">Chiudi ticket</button>
+</div>
+
+<h3>Commenti</h3>
+<textarea id="commento" placeholder="Scrivi un commento..."></textarea>
+<div class="row">
+<button onclick="aggiungiCommento()">Invia commento</button>
+<button class="secondary" onclick="caricaCommenti()">Carica commenti</button>
+</div>
+<div id="listaCommenti"></div>
+
+<h3>Storico stato (OPERATORE)</h3>
+<button class="secondary" onclick="storico()">Carica storico</button>
+<div id="listaStorico"></div>
+</section>
+
+<section class="card full">
+<h2>Log richieste</h2>
+<div id="log">UI pronta.</div>
+</section>
+</div>
+</div>
+
+<script>
+let token = sessionStorage.getItem("ticketflow_token");
+let utente = JSON.parse(sessionStorage.getItem("ticketflow_user") || "null");
+
+const val = id => document.getElementById(id).value;
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+
+function baseUrl(){ return val("baseUrl").replace(/\/+$/,""); }
+function log(s){ const e=document.getElementById("log"); e.textContent += "\n"+new Date().toLocaleTimeString()+"  "+s; e.scrollTop=e.scrollHeight; }
+
+function aggiornaSessione(){
+  const e=document.getElementById("sessione");
+  if(!token || !utente){ e.textContent="Non autenticato"; return; }
+  e.textContent=`Autenticato: ${utente.nome ?? ""} ${utente.cognome ?? ""} — ${utente.email ?? ""} — ${utente.ruolo ?? ""}`;
+}
+aggiornaSessione();
+
+async function api(method, path, body=null, auth=true){
+  const headers = {};
+  if(body !== null) headers["Content-Type"]="application/json";
+  if(auth && token) headers["Authorization"]="Bearer "+token;
+
+  log(`${method} ${path}`);
+  try{
+    const res=await fetch(baseUrl()+path,{
+      method,
+      headers,
+      body: body !== null ? JSON.stringify(body) : undefined
+    });
+
+    const type=res.headers.get("content-type") || "";
+    let data=null;
+    if(res.status !== 204){
+      data = type.includes("application/json") ? await res.json() : await res.text();
+    }
+
+    if(!res.ok){
+      const msg=typeof data==="string" ? data : JSON.stringify(data);
+      log(`ERRORE ${res.status}: ${msg}`);
+      alert(`Errore ${res.status}: ${msg || "richiesta fallita"}`);
+      return null;
+    }
+    log(`OK ${res.status}`);
+    return data ?? {};
+  }catch(err){
+    log("ERRORE RETE: "+err.message);
+    alert("Errore di rete/CORS. Controlla che Spring Boot sia avviato e che il CORS consenta l'origine di questa pagina.");
+    return null;
+  }
+}
+
+async function registrazione(){
+  const body={nome:val("regNome"),cognome:val("regCognome"),email:val("regEmail"),password:val("regPassword")};
+  const data=await api("POST","/auth/register",body,false);
+  if(data){ alert("Registrazione completata. Ora puoi effettuare il login."); }
+}
+
+async function login(){
+  const body={email:val("loginEmail"),password:val("loginPassword")};
+  const data=await api("POST","/auth/login",body,false);
+  if(!data) return;
+  token=data.token;
+  utente=data;
+  sessionStorage.setItem("ticketflow_token",token);
+  sessionStorage.setItem("ticketflow_user",JSON.stringify(utente));
+  aggiornaSessione();
+}
+
+function logout(){
+  token=null; utente=null;
+  sessionStorage.removeItem("ticketflow_token");
+  sessionStorage.removeItem("ticketflow_user");
+  aggiornaSessione();
+  log("Logout locale completato.");
+}
+
+function richiediLogin(){
+  if(token) return true;
+  alert("Prima effettua il login.");
+  return false;
+}
+
+function renderTickets(id,tickets){
+  const box=document.getElementById(id);
+  if(!Array.isArray(tickets) || tickets.length===0){ box.innerHTML='<p class="hint">Nessun ticket.</p>'; return; }
+  box.innerHTML=tickets.map(t=>`
+    <div class="ticket">
+      <strong>#${esc(t.id)} — ${esc(t.titolo)}</strong>
+      <div>${esc(t.descrizione)}</div>
+      <div style="margin-top:6px"><span class="badge">${esc(t.stato)}</span><span class="badge">${esc(t.priorita)}</span></div>
+      <button class="secondary" onclick="selezionaTicket(${Number(t.id)})">Usa questo ID</button>
+    </div>`).join("");
+}
+
+function selezionaTicket(id){
+  document.getElementById("ticketId").value=id;
+  document.getElementById("ticketId").scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+async function creaTicket(){
+  if(!richiediLogin()) return;
+  const body={titolo:val("titolo"),descrizione:val("descrizione"),priorita:val("priorita"),categoriaId:Number(val("categoria"))};
+  const data=await api("POST","/tickets",body);
+  if(data){ alert("Ticket creato."); await mieiTicket(); }
+}
+
+async function mieiTicket(){
+  if(!richiediLogin()) return;
+  const data=await api("GET","/tickets/mine");
+  if(data) renderTickets("listaMiei",data);
+}
+
+async function ticketAperti(){
+  if(!richiediLogin()) return;
+  const data=await api("GET","/tickets/open");
+  if(data) renderTickets("listaOperatore",data);
+}
+
+async function ticketAssegnati(){
+  if(!richiediLogin()) return;
+  const data=await api("GET","/tickets/assigned");
+  if(data) renderTickets("listaOperatore",data);
+}
+
+function idTicket(){
+  const id=Number(val("ticketId"));
+  if(!id){ alert("Inserisci un Ticket ID valido."); return null; }
+  return id;
+}
+
+async function take(){
+  if(!richiediLogin()) return;
+  const id=idTicket(); if(!id) return;
+  const data=await api("PATCH",`/tickets/${id}/take`);
+  if(data){ alert("Ticket preso in carico."); await ticketAssegnati(); }
+}
+
+async function closeTicket(){
+  if(!richiediLogin()) return;
+  const id=idTicket(); if(!id) return;
+  const data=await api("PATCH",`/tickets/${id}/close`);
+  if(data){ alert("Ticket chiuso."); await ticketAssegnati(); }
+}
+
+async function aggiungiCommento(){
+  if(!richiediLogin()) return;
+  const id=idTicket(); if(!id) return;
+  const data=await api("POST",`/tickets/${id}/comments`,{testo:val("commento")});
+  if(data){ document.getElementById("commento").value=""; await caricaCommenti(); }
+}
+
+async function caricaCommenti(){
+  if(!richiediLogin()) return;
+  const id=idTicket(); if(!id) return;
+  const data=await api("GET",`/tickets/${id}/comments`);
+  if(!data) return;
+  const box=document.getElementById("listaCommenti");
+  if(!Array.isArray(data) || !data.length){ box.innerHTML='<p class="hint">Nessun commento.</p>'; return; }
+  box.innerHTML=data.map(c=>`
+    <div class="comment">
+      <strong>${esc(c.nomeAutore)}</strong>
+      <div>${esc(c.testo)}</div>
+      <small>${esc(c.dataCreazione)}</small>
+    </div>`).join("");
+}
+
+async function storico(){
+  if(!richiediLogin()) return;
+  const id=idTicket(); if(!id) return;
+  const data=await api("GET",`/tickets/${id}/history`);
+  if(!data) return;
+  const box=document.getElementById("listaStorico");
+  if(!Array.isArray(data) || !data.length){ box.innerHTML='<p class="hint">Nessuno storico.</p>'; return; }
+  box.innerHTML=data.map(h=>`
+    <div class="history">
+      #${esc(h.id)} — <strong>${esc(h.statoPrecedente)}</strong> → <strong>${esc(h.statoNuovo)}</strong>
+      <br><small>${esc(h.dataModifica)}</small>
+    </div>`).join("");
+}
+</script>
+</body>
+</html>
